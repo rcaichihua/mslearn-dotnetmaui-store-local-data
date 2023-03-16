@@ -1,4 +1,6 @@
-﻿using System;
+﻿using People.Models;
+using SQLite;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,10 +15,15 @@ namespace People
         public string StatusMessage { get; set; }
 
         // TODO: Add variable for the SQLite connection
+        private SQLiteConnection conn;
 
         private void Init()
         {
             // TODO: Add code to initialize the repository         
+            if (conn is not null)
+                return;
+            conn = new(_dbPath);
+            conn.CreateTable<Person>();
         }
 
         public PersonRepository(string dbPath)
@@ -30,13 +37,17 @@ namespace People
             try
             {
                 // TODO: Call Init()
+                Init();
 
                 // basic validation to ensure a name was entered
                 if (string.IsNullOrEmpty(name))
                     throw new Exception("Valid name required");
 
+                Person person = new() { Name = name};
                 // TODO: Insert the new person into the database
-                result = 0;
+                result = conn.Insert(person);
+
+                //result = 0;
 
                 StatusMessage = string.Format("{0} record(s) added (Name: {1})", result, name);
             }
@@ -52,7 +63,8 @@ namespace People
             // TODO: Init then retrieve a list of Person objects from the database into a list
             try
             {
-                
+                Init();
+                return conn.Table<Person>().ToList();
             }
             catch (Exception ex)
             {
